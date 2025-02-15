@@ -28,7 +28,6 @@ test.describe('Sign up form tests', () => {
     await page.fill('#email', 'john.doe@example.com');
     await page.fill('#password', 'password123');
     await page.fill('#confirmPassword', 'wrongpassword');
-
     await page.click('button[type="submit"]');
 
     await expect(page.locator('#passwordError')).toHaveText('Паролі не співпадають.');
