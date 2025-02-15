@@ -1,0 +1,33 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout репозиторію
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run tests у headless-режимі
+        run: npx playwright test
+
+      
+      # - name: Запуск тестів у headed-режимі (GUI)
+      #   run: xvfb-run --auto-servernum npx playwright test --headed
