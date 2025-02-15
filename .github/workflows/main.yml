@@ -1,33 +1,34 @@
-name: Playwright Tests
+name: Run Tests on PR
 
 on:
-  push:
+  pull_request:  # Запуск тестів при створенні PR
     branches:
-      - main
-  pull_request:
+      - main  # Або інша гілка, в яку відправляється PR
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-latest  # Виконання на Linux
     steps:
       - name: Checkout репозиторію
         uses: actions/checkout@v3
 
-      - name: Install Node.js
+      - name: Встановлення Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # - name: Install dependencies
+      # - name: Встановлення залежностей
       #   run: npm install
 
-      - name: Install Playwright
+      - name: Встановлення Playwright
         run: npx playwright install --with-deps
 
-      - name: Run tests у headless-режимі
+      - name: Запуск тестів у headless-режимі
         run: npx playwright test
 
-      
-      # - name: Запуск тестів у headed-режимі (GUI)
-      #   run: xvfb-run --auto-servernum npx playwright test --headed
+      - name: Збереження результатів тестування
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test-results/  # Вказати папку для логів (змінюй за потреби)
