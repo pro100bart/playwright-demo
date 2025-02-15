@@ -18,8 +18,8 @@ jobs:
         with:
           node-version: 18
 
-      - name: Встановлення залежностей
-        run: npm install
+      # - name: Встановлення залежностей
+      #   run: npm install
 
       - name: Встановлення Playwright
         run: npx playwright install --with-deps
