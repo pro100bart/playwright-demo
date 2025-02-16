@@ -45,15 +45,32 @@ jobs:
           retention-days: 7  # Зберігати звіти 7 днів
 
   comment:
-    needs: test
+    needs: test  
+    if: always()  # ВАЖЛИВО! Виконувати job навіть якщо `test` провалився
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout репозиторію
+        uses: actions/checkout@v4
+
+      - name: Download HTML Report
+        uses: actions/download-artifact@v4
+        with:
+          name: html-report-${{ github.event.pull_request.number }}
+          path: playwright-report/
+
+      - name: Count Passed/Failed Tests
+        run: |
+          PASSED=$(grep -o "✓" playwright-report/index.html | wc -l || echo "0")
+          FAILED=$(grep -o "✗" playwright-report/index.html | wc -l || echo "0")
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
+
       - name: Publish comment with test summary
         uses: mshick/add-pr-comment@v2
         with:
           message: |
             📊 **Результати тестування**
-            ✅ Виконано тестів: `${{ env.TEST_RESULTS }}`
+            ✅ Виконано тестів: `${{ env.PASSED_TESTS }}`
             ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
-            🔗 **HTML-звіт:** [Завантажити тут](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})
+            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})**
           repo-token: ${{ secrets.GITHUB_TOKEN }}
