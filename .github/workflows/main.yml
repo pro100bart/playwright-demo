@@ -30,11 +30,11 @@ jobs:
 
       - name: Debug Playwright Configuration
         run: |
-          echo "Поточний Playwright config:"
+          echo "📄 Поточний Playwright config:"
           cat playwright.config.ts || echo "⚠️ WARNING: Файл playwright.config.ts не знайдено!"
 
-      - name: Check Playwright Reporters
-        run: npx playwright show-report --reporter=list || echo "WARNING Не вдалося отримати список репортерів!"
+      - name: Check Available Playwright Reporters
+        run: npx playwright test --list || echo "⚠️ WARNING: Не вдалося отримати список репортерів!"
 
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json
@@ -58,3 +58,49 @@ jobs:
           name: html-report-${{ github.event.pull_request.number }}
           path: playwright-report/
           retention-days: 7  
+
+  comment:
+    needs: test  
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout репозиторію
+        uses: actions/checkout@v4
+
+      - name: Download HTML Report
+        uses: actions/download-artifact@v4
+        with:
+          name: html-report-${{ github.event.pull_request.number }}
+          path: playwright-report/
+
+      - name: Count Passed/Failed Tests
+        run: |
+          TEST_RESULTS_FILE="playwright-report/test-results.json"
+          if [ -f "$TEST_RESULTS_FILE" ]; then
+            TOTAL=$(jq '[.suites[].specs[] | .tests | length] | add' $TEST_RESULTS_FILE)
+            PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
+            FAILED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="failed")] | length' $TEST_RESULTS_FILE)
+            echo "✅ JSON-звіт знайдено! Дані:"
+            echo "🔢 Загальна кількість тестів: $TOTAL"
+            echo "✅ Пройдені тести: $PASSED"
+            echo "❌ Провалені тести: $FAILED"
+          else
+            echo "❌ JSON-звіт НЕ знайдено! Використовуємо 0 значень."
+            TOTAL=0
+            PASSED=0
+            FAILED=0
+          fi
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
+
+      - name: Publish comment with test summary
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            📊 **Результати тестування**
+            🔢 Загальна кількість тестів: `${{ env.TOTAL_TESTS }}`
+            ✅ Виконано тестів: `${{ env.PASSED_TESTS }}`
+            ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
+            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
