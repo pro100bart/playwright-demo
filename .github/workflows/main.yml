@@ -1,34 +1,53 @@
 name: Run Tests on PR
 
 on:
-  pull_request:  # Запуск тестів при створенні PR
+  pull_request: 
     branches:
-      - main  # Або інша гілка, в яку відправляється PR
+      - main  
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Виконання на Linux
+    runs-on: ubuntu-latest  
     steps:
       - name: Checkout репозиторію
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Встановлення Node.js
-        uses: actions/setup-node@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Встановлення залежностей
+      - name: Install dependencies
         run: npm install
 
-      - name: Встановлення Playwright
+      - name: Install Playwright
         run: npx playwright install --with-deps
 
-      - name: Запуск тестів у headless-режимі
-        run: npx playwright test
+      - name: Run tests in headless-mode
+        run: npx playwright test --reporter=html
 
-      - name: Збереження результатів тестування
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Save HTML Report
+        if: always()  # Завжди зберігаємо звіт, навіть якщо тести пройшли
+        uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: test-results/  # Вказати папку для логів (змінюй за потреби)
+          name: html-report
+          path: test-results/html-report/
+  
+  comment:
+    needs: test  # Виконується після тестів
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout репозиторію
+        uses: actions/checkout@v4
+
+      - name: Download HTML Report
+        uses: actions/download-artifact@v4
+        with:
+          name: html-report
+          path: test-results/html-report/
+
+      - name: Publish comment with link to report
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: "📊 Тестовий звіт доступний [тут](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
