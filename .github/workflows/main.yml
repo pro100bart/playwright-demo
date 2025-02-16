@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write  
   actions: write  
-  pull-requests: write  # Виправлення: Дозволяє публікувати коментарі в PR
+  pull-requests: write  
 
 jobs:
   test:
@@ -29,7 +29,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run tests in headless-mode
-        run: npx playwright test
+        run: npx playwright test --reporter=html,json
 
       - name: Debug test results
         if: always()
@@ -43,7 +43,7 @@ jobs:
         with:
           name: html-report-${{ github.event.pull_request.number }}
           path: playwright-report/
-          retention-days: 7  # Зберігати звіти 7 днів
+          retention-days: 7  
 
   comment:
     needs: test  
@@ -61,17 +61,27 @@ jobs:
 
       - name: Count Passed/Failed Tests
         run: |
-          PASSED=$(grep -o "✓" playwright-report/index.html | wc -l || echo "0")
-          FAILED=$(grep -o "✗" playwright-report/index.html | wc -l || echo "0")
+          TEST_RESULTS_FILE="playwright-report/data/test-results.json"
+          if [ -f "$TEST_RESULTS_FILE" ]; then
+            PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
+            FAILED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="failed")] | length' $TEST_RESULTS_FILE)
+            TOTAL=$(jq '[.suites[].specs[].tests[]] | length' $TEST_RESULTS_FILE)
+          else
+            PASSED=0
+            FAILED=0
+            TOTAL=0
+          fi
           echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
           echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
 
       - name: Publish comment with test summary
         uses: mshick/add-pr-comment@v2
         with:
           message: |
             📊 **Результати тестування**
+            🔢 Загальна кількість тестів: `${{ env.TOTAL_TESTS }}`
             ✅ Виконано тестів: `${{ env.PASSED_TESTS }}`
             ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
-            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})**
-          repo-token: ${{ secrets.PAT_TOKEN }}
+            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)**
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
