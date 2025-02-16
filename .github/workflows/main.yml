@@ -33,9 +33,14 @@ jobs:
 
       - name: Extract Test Statistics from JSON logs
         run: |
-          TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
-          FAILED=$(grep -o '"unexpected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
+          TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
+          FAILED=$(jq '.stats.unexpected' playwright-output.log || echo "0")
+
+          if [[ -z "$TOTAL" || "$TOTAL" == "null" ]]; then TOTAL="0"; fi
+          if [[ -z "$FAILED" || "$FAILED" == "null" ]]; then FAILED="0"; fi
+          
           PASSED=$((TOTAL - FAILED))
+          if [[ $PASSED -lt 0 ]]; then PASSED="0"; fi
 
           echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
           echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
