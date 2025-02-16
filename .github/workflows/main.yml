@@ -31,11 +31,16 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html 2>&1 | tee playwright-output.log
 
+      - name: Debug Playwright Stats
+        run: |
+          echo "🔍 Виводимо всі рядки зі словом 'stats':"
+          grep '"stats"' playwright-output.log || echo "❌ Дані про тести не знайдено!"
+
       - name: Extract Test Statistics from Logs
         run: |
-          TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | head -1 | awk -F': ' '{print $2}' || echo "0")
-          PASSED=$TOTAL  
-          FAILED=$(grep -o '"unexpected": [0-9]*' playwright-output.log | awk '{print $2}' || echo "0")
+          TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
+          FAILED=$(grep -o '"unexpected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
+          PASSED=$((TOTAL - FAILED))
 
           echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
           echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
