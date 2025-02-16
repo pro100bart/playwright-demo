@@ -14,6 +14,6 @@ export default defineConfig({
   reporter: [
     ['list'],  // Виводить результати у консоль
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'playwright-report/data/test-results.json' }] 
+    ['json', { outputFile: 'playwright-report/test-results.json' }] // Додано!
   ],
 });

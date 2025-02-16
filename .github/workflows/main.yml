@@ -36,7 +36,11 @@ jobs:
         run: |
           echo "🔍 Перевіряємо, чи існує JSON-звіт..."
           ls -la playwright-report || echo "⚠️ WARNING: Папка playwright-report не знайдена!"
-          ls -la playwright-report/test-results.json || echo "⚠️ WARNING: Файл test-results.json не знайдено!"
+          if [ -f "playwright-report/test-results.json" ]; then
+            echo "✅ JSON-звіт знайдено!"
+          else
+            echo "❌ JSON-звіт НЕ створено!"
+          fi
 
       - name: Save HTML Report (артефакт)
         if: always()
@@ -67,7 +71,12 @@ jobs:
             TOTAL=$(jq '[.suites[].specs[] | .tests | length] | add' $TEST_RESULTS_FILE)
             PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
             FAILED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="failed")] | length' $TEST_RESULTS_FILE)
+            echo "✅ JSON-звіт знайдено! Дані:"
+            echo "🔢 Загальна кількість тестів: $TOTAL"
+            echo "✅ Пройдені тести: $PASSED"
+            echo "❌ Провалені тести: $FAILED"
           else
+            echo "❌ JSON-звіт НЕ знайдено! Використовуємо 0 значень."
             TOTAL=0
             PASSED=0
             FAILED=0
