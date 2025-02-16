@@ -8,45 +8,40 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    outputs:
-      total_tests: ${{ steps.extract_stats.outputs.total_tests }}
-      passed_tests: ${{ steps.extract_stats.outputs.passed_tests }}
-      failed_tests: ${{ steps.extract_stats.outputs.failed_tests }}
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests in headless mode
+      - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
       - name: Extract Test Statistics from JSON logs
-        id: extract_stats
         run: |
           TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
           FAILED=$(jq '.stats.unexpected' playwright-output.log || echo "0")
-          PASSED=$(($TOTAL - $FAILED))
+          PASSED=$((TOTAL - FAILED))
+          if [ "$PASSED" -lt 0 ]; then PASSED=0; fi
 
-          echo "total_tests=$TOTAL" >> $GITHUB_ENV
-          echo "passed_tests=$PASSED" >> $GITHUB_ENV
-          echo "failed_tests=$FAILED" >> $GITHUB_ENV
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
 
-          echo "total_tests=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passed_tests=$PASSED" >> $GITHUB_OUTPUT
-          echo "failed_tests=$FAILED" >> $GITHUB_OUTPUT
+          echo "📊 Статистика тестів:"
+          echo "🔢 Загальна кількість: $TOTAL"
+          echo "✅ Пройдені: $PASSED"
+          echo "❌ Провалені: $FAILED"
 
-  comment:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish comment with test summary
+      - name: Comment on PR with test results
         uses: mshick/add-pr-comment@v2
         with:
           message: |
             📊 **Результати тестування**
-            🔢 Загальна кількість тестів: `${{ needs.test.outputs.total_tests }}`
-            ✅ Виконано тестів: `${{ needs.test.outputs.passed_tests }}`
-            ❌ Завалено тестів: `${{ needs.test.outputs.failed_tests }}`
-            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})**
+            🔢 Загальна кількість тестів: **${{ env.TOTAL_TESTS }}**
+            ✅ Виконано тестів: **${{ env.PASSED_TESTS }}**
+            ❌ Завалено тестів: **${{ env.FAILED_TESTS }}**
+            🔗 [Переглянути HTML-звіт](./playwright-report/index.html)
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
