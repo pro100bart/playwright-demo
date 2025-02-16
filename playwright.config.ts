@@ -11,5 +11,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
   },
-  reporter: [['html', { outputFolder: 'test-results/html-report', open: 'never' }]], // Коригуємо шлях!
+  reporter: [
+    ['list'],  // Виводить результати у консоль
+    ['html', { outputFolder: 'playwright-report', open: 'never' }]  // Важливо: правильний шлях!
+  ],
 });

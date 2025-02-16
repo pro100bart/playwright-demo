@@ -24,33 +24,27 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run tests in headless-mode
-        run: npx playwright test --reporter=html --output=test-results/
+        run: npx playwright test
 
       - name: Debug test results (перевірка наявності файлів)
-        run: ls -la test-results/html-report || echo "WARNING HTML-report not found!"
+        if: always()  # Запускаємо цей крок у будь-якому випадку
+        run: |
+          echo "🔍 Перевірка директорії test-results:"
+          ls -la test-results || echo "⚠️ WARNING: test-results не знайдено!"
+          
+          echo "🔍 Перевірка директорії playwright-report:"
+          ls -la playwright-report || echo "⚠️ WARNING: playwright-report не знайдено!"
 
       - name: Save HTML Report
-        if: always()  # Завжди зберігаємо звіт, навіть якщо тести пройшли
+        if: always()  
         uses: actions/upload-artifact@v4
         with:
           name: html-report
-          path: test-results/html-report/
+          path: playwright-report/  # Виправлений шлях!
   
   comment:
-    needs: test  # Виконується після тестів
+    needs: test  
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download HTML Report
-        uses: actions/download-artifact@v4
-        with:
-          name: html-report
-          path: test-results/html-report/
-
-      - name: Publish comment with link to report
-        uses: mshick/add-pr-comment@v2
-        with:
-          message: "📊 Тестовий звіт доступний [тут](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        uses: action
