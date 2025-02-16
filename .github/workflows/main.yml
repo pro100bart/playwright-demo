@@ -37,7 +37,7 @@ jobs:
         run: npx playwright test --list || echo "⚠️ WARNING Не вдалося отримати список репортерів!"
 
       - name: Run tests in headless-mode
-        run: npx playwright test --reporter=html,json
+        run: npx playwright test --reporter=html,json --output=playwright-report/
 
       - name: Debug Playwright Report Directory
         if: always()
