@@ -74,4 +74,4 @@ jobs:
             ✅ Виконано тестів: `${{ env.PASSED_TESTS }}`
             ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
             🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})**
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.PAT_TOKEN }}
