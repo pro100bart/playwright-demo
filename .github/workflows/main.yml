@@ -33,7 +33,7 @@ jobs:
 
       - name: Extract Test Statistics from Logs
         run: |
-          TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | awk '{print $2}' || echo "0")
+          TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | head -1 | awk -F': ' '{print $2}' || echo "0")
           PASSED=$TOTAL  
           FAILED=$(grep -o '"unexpected": [0-9]*' playwright-output.log | awk '{print $2}' || echo "0")
 
