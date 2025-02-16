@@ -6,9 +6,8 @@ on:
       - main  
 
 permissions:
-  contents: write  # Потрібно для GitHub Pages
-  actions: write
-  pages: write  
+  contents: write  
+  actions: write  
 
 jobs:
   test:
@@ -31,37 +30,30 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test
 
-      - name: Debug test results (перевірка наявності файлів)
+      - name: Debug test results
         if: always()
         run: |
           echo "🔍 Перевірка директорії playwright-report"
           ls -la playwright-report || echo "WARNING playwright-report не знайдено!"
 
-      - name: Deploy HTML Report to GitHub Pages
+      - name: Save HTML Report (артефакт)
         if: always()
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: playwright-report
-          publish_branch: gh-pages  # Гілка для GitHub Pages
+          name: html-report-${{ github.event.pull_request.number }}
+          path: playwright-report/
+          retention-days: 7  # Зберігати звіти 7 днів
 
   comment:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Get Test Results
-        run: |
-          TEST_RESULTS=$(npx playwright show-report --output=playwright-report | grep '✓' | wc -l)
-          FAILED_TESTS=$(npx playwright show-report --output=playwright-report | grep '✗' | wc -l)
-          echo "TEST_RESULTS=$TEST_RESULTS" >> $GITHUB_ENV
-          echo "FAILED_TESTS=$FAILED_TESTS" >> $GITHUB_ENV
-
       - name: Publish comment with test summary
         uses: mshick/add-pr-comment@v2
         with:
           message: |
             📊 **Результати тестування**
-            ✅ Виконано тестів: ${{ env.TEST_RESULTS }}
-            ❌ Завалено тестів: ${{ env.FAILED_TESTS }}
-            🔗 **HTML-звіт:** [Переглянути тут](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)
+            ✅ Виконано тестів: `${{ env.TEST_RESULTS }}`
+            ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
+            🔗 **HTML-звіт:** [Завантажити тут](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.event.pull_request.number }})
           repo-token: ${{ secrets.GITHUB_TOKEN }}
