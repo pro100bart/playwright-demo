@@ -63,17 +63,17 @@ jobs:
         run: |
           TEST_RESULTS_FILE="playwright-report/data/test-results.json"
           if [ -f "$TEST_RESULTS_FILE" ]; then
+            TOTAL=$(jq '[.suites[].specs[].tests[]] | length' $TEST_RESULTS_FILE)
             PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
             FAILED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="failed")] | length' $TEST_RESULTS_FILE)
-            TOTAL=$(jq '[.suites[].specs[].tests[]] | length' $TEST_RESULTS_FILE)
           else
+            TOTAL=0
             PASSED=0
             FAILED=0
-            TOTAL=0
           fi
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
           echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
           echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
 
       - name: Publish comment with test summary
         uses: mshick/add-pr-comment@v2
@@ -83,5 +83,5 @@ jobs:
             🔢 Загальна кількість тестів: `${{ env.TOTAL_TESTS }}`
             ✅ Виконано тестів: `${{ env.PASSED_TESTS }}`
             ❌ Завалено тестів: `${{ env.FAILED_TESTS }}`
-            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)**
+            🔗 **[Переглянути HTML-звіт](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
           repo-token: ${{ secrets.GITHUB_TOKEN }}

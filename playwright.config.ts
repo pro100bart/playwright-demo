@@ -13,6 +13,7 @@ export default defineConfig({
   },
   reporter: [
     ['list'],  // Виводить результати у консоль
-    ['html', { outputFolder: 'playwright-report', open: 'never' }]  // Важливо: правильний шлях!
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['json', { outputFile: 'playwright-report/data/test-results.json' }] 
   ],
 });
