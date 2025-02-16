@@ -28,16 +28,23 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
 
+      - name: Debug Playwright Config & Ensure JSON Report is Set
+        run: |
+          echo "📄 Перевіряємо Playwright config..."
+          cat playwright.config.ts || echo "⚠️ WARNING: Файл playwright.config.ts не знайдено!"
+          echo "🔍 Переконуємось, що Playwright записує JSON-звіт!"
+
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json
 
-      - name: Debug test results file
+      - name: Debug Playwright Report Directory
         if: always()
         run: |
           echo "🔍 Перевіряємо, чи існує JSON-звіт..."
           ls -la playwright-report || echo "⚠️ WARNING: Папка playwright-report не знайдена!"
           if [ -f "playwright-report/test-results.json" ]; then
             echo "✅ JSON-звіт знайдено!"
+            cat playwright-report/test-results.json | head -n 20  # Вивести перші 20 рядків JSON для перевірки
           else
             echo "❌ JSON-звіт НЕ створено!"
           fi

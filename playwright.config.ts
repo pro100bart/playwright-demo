@@ -12,8 +12,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   reporter: [
-    ['list'],  // Виводить результати у консоль
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'playwright-report/test-results.json' }] // Додано!
+    ['json', { outputFile: 'playwright-report/test-results.json' }] // Додано JSON-звіт!
   ],
 });
