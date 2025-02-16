@@ -1,34 +1,65 @@
 name: Run Tests on PR
 
 on:
-  pull_request:  # Запуск тестів при створенні PR
+  pull_request:
     branches:
-      - main  # Або інша гілка, в яку відправляється PR
+      - main  
+
+permissions:
+  contents: write  
+  actions: write  
+  pull-requests: write  
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Виконання на Linux
+    runs-on: ubuntu-latest  
     steps:
       - name: Checkout репозиторію
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Встановлення Node.js
-        uses: actions/setup-node@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      # - name: Встановлення залежностей
-      #   run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Встановлення Playwright
+      - name: Install Playwright
         run: npx playwright install --with-deps
 
-      - name: Запуск тестів у headless-режимі
-        run: npx playwright test
+      - name: Run tests in headless-mode
+        run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
-      - name: Збереження результатів тестування
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Debug JSON Output
+        run: |
+          echo "🔍 Виводимо JSON-звіт із логів Playwright:"
+          grep -A 10 '"stats"' playwright-output.log || echo "❌ Дані про тести не знайдено!"
+
+      - name: Extract Test Statistics from JSON logs
+        run: |
+          TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
+          FAILED=$(jq '.stats.unexpected' playwright-output.log || echo "0")
+          PASSED=$((TOTAL - FAILED))
+          if [ "$PASSED" -lt 0 ]; then PASSED=0; fi
+
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
+
+          echo "📊 Статистика тестів:"
+          echo "🔢 Загальна кількість: $TOTAL"
+          echo "✅ Пройдені: $PASSED"
+          echo "❌ Провалені: $FAILED"
+
+      - name: Comment on PR with test results
+        uses: mshick/add-pr-comment@v2
         with:
-          name: test-results
-          path: test-results/  # Вказати папку для логів (змінюй за потреби)
+          message: |
+            📊 **Результати тестування**
+            🔢 Загальна кількість тестів: **${{ env.TOTAL_TESTS }}**
+            ✅ Виконано тестів: **${{ env.PASSED_TESTS }}**
+            ❌ Завалено тестів: **${{ env.FAILED_TESTS }}**
+            🔗 [Переглянути HTML-звіт](./playwright-report/index.html)
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
