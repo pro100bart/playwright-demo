@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'playwright-report/test-results.json' }] // Додано JSON-звіт!
+    ['json', { outputFile: 'test-results.json' }] // Оновлено: JSON не в "playwright-report/"
   ],
   use: {
     trace: 'on',

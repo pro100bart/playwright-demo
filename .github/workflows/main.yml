@@ -33,20 +33,24 @@ jobs:
           echo "📄 Поточний Playwright config:"
           cat playwright.config.ts || echo "⚠️ WARNING: Файл playwright.config.ts не знайдено!"
 
-      - name: Check Available Playwright Reporters
-        run: npx playwright test --list || echo "⚠️ WARNING Не вдалося отримати список репортерів!"
-
       - name: Run tests in headless-mode
-        run: npx playwright test --reporter=html,json --output=playwright-report/
+        run: npx playwright test --reporter=html,json
+
+      - name: Search for test-results.json
+        if: always()
+        run: |
+          echo "🔍 Шукаємо JSON-звіт у всій файловій системі..."
+          find /home/runner/work/ -type f -name "test-results.json" || echo "❌ JSON-звіт не знайдено!"
 
       - name: Debug Playwright Report Directory
         if: always()
         run: |
           echo "🔍 Перевіряємо, чи існує JSON-звіт..."
-          ls -la playwright-report || echo "⚠️ WARNING: Папка playwright-report не знайдена!"
-          if [ -f "playwright-report/test-results.json" ]; then
+          ls -la || echo "⚠️ WARNING: Коренева директорія не знайдена!"
+          ls -la playwright-report || echo "⚠️ WARNING Папка playwright-report не знайдена!"
+          if [ -f "test-results.json" ]; then
             echo "✅ JSON-звіт знайдено!"
-            cat playwright-report/test-results.json | head -n 20  # Вивести перші 20 рядків JSON для перевірки
+            cat test-results.json | head -n 20  # Вивести перші 20 рядків JSON для перевірки
           else
             echo "❌ JSON-звіт НЕ створено!"
           fi
@@ -75,7 +79,7 @@ jobs:
 
       - name: Count Passed/Failed Tests
         run: |
-          TEST_RESULTS_FILE="playwright-report/test-results.json"
+          TEST_RESULTS_FILE="test-results.json"
           if [ -f "$TEST_RESULTS_FILE" ]; then
             TOTAL=$(jq '[.suites[].specs[] | .tests | length] | add' $TEST_RESULTS_FILE)
             PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
