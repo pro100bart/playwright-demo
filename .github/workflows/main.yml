@@ -29,14 +29,9 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run tests in headless-mode
-        run: npx playwright test --reporter=html 2>&1 | tee playwright-output.log
+        run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
-      - name: Debug Playwright Stats
-        run: |
-          echo "🔍 Виводимо всі рядки зі словом 'stats':"
-          grep '"stats"' playwright-output.log || echo "❌ Дані про тести не знайдено!"
-
-      - name: Extract Test Statistics from Logs
+      - name: Extract Test Statistics from JSON logs
         run: |
           TOTAL=$(grep -o '"expected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
           FAILED=$(grep -o '"unexpected": [0-9]*' playwright-output.log | head -1 | sed 's/[^0-9]//g' || echo "0")
