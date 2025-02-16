@@ -30,10 +30,10 @@ jobs:
         if: always()  # Запускаємо цей крок у будь-якому випадку
         run: |
           echo "🔍 Перевірка директорії test-results:"
-          ls -la test-results || echo "⚠️ WARNING: test-results не знайдено!"
+          ls -la test-results || echo "⚠️ WARNING test-results не знайдено!"
           
           echo "🔍 Перевірка директорії playwright-report:"
-          ls -la playwright-report || echo "⚠️ WARNING: playwright-report не знайдено!"
+          ls -la playwright-report || echo "⚠️ WARNING playwright-report не знайдено!"
 
       - name: Save HTML Report
         if: always()  
