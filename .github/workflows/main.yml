@@ -2,8 +2,8 @@ name: Run Tests on PR
 
 on:
   pull_request: 
-    # branches:
-    #   - main  
+    branches:
+      - main  
 
 jobs:
   test:
@@ -26,14 +26,14 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test
 
-      - name: Debug test results (перевірка наявності файлів)
-        if: always()  # Запускаємо цей крок у будь-якому випадку
-        run: |
-          echo "🔍 Перевірка директорії test-results"
-          ls -la test-results || echo "WARNING test-results не знайдено!"
+      # - name: Debug test results (перевірка наявності файлів)
+      #   if: always()  # Запускаємо цей крок у будь-якому випадку
+      #   run: |
+      #     echo "🔍 Перевірка директорії test-results"
+      #     ls -la test-results || echo "WARNING test-results не знайдено!"
           
-          echo "🔍 Перевірка директорії playwright-report"
-          ls -la playwright-report || echo "WARNING playwright-report не знайдено!"
+      #     echo "🔍 Перевірка директорії playwright-report"
+      #     ls -la playwright-report || echo "WARNING playwright-report не знайдено!"
 
       - name: Save HTML Report
         if: always()  
