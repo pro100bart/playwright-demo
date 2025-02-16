@@ -26,8 +26,8 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html --output=test-results/
 
-      - name: Debug test results (перевірка наявності файлів)
-        run: ls -la test-results/html-report || echo "WARNING: HTML-report not found!"
+      # - name: Debug test results (перевірка наявності файлів)
+      #   run: ls -la test-results/html-report || echo "WARNING: HTML-report not found!"
 
       - name: Save HTML Report
         if: always()  # Завжди зберігаємо звіт, навіть якщо тести пройшли
