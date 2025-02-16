@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',  // У тебе тести в папці e2e
+  testDir: './e2e',  
   retries: 2,
   use: {
     headless: true,
@@ -11,5 +11,5 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
   },
-  reporter: [['html', { outputFolder: 'test-results/html-report', open: 'never' }]],
+  reporter: [['html', { outputFolder: 'test-results/html-report', open: 'never' }]], // Коригуємо шлях!
 });
