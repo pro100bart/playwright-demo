@@ -31,11 +31,12 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json
 
-      - name: Debug test results
+      - name: Debug test results file
         if: always()
         run: |
-          echo "🔍 Перевірка директорії playwright-report"
-          ls -la playwright-report || echo "WARNING playwright-report не знайдено!"
+          echo "🔍 Перевіряємо, чи існує JSON-звіт..."
+          ls -la playwright-report || echo "⚠️ WARNING: Папка playwright-report не знайдена!"
+          ls -la playwright-report/test-results.json || echo "⚠️ WARNING: Файл test-results.json не знайдено!"
 
       - name: Save HTML Report (артефакт)
         if: always()
@@ -61,9 +62,9 @@ jobs:
 
       - name: Count Passed/Failed Tests
         run: |
-          TEST_RESULTS_FILE="playwright-report/data/test-results.json"
+          TEST_RESULTS_FILE="playwright-report/test-results.json"
           if [ -f "$TEST_RESULTS_FILE" ]; then
-            TOTAL=$(jq '[.suites[].specs[].tests[]] | length' $TEST_RESULTS_FILE)
+            TOTAL=$(jq '[.suites[].specs[] | .tests | length] | add' $TEST_RESULTS_FILE)
             PASSED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="passed")] | length' $TEST_RESULTS_FILE)
             FAILED=$(jq '[.suites[].specs[].tests[] | select(.results[].status=="failed")] | length' $TEST_RESULTS_FILE)
           else
