@@ -34,7 +34,7 @@ jobs:
           cat playwright.config.ts || echo "⚠️ WARNING: Файл playwright.config.ts не знайдено!"
 
       - name: Check Available Playwright Reporters
-        run: npx playwright test --list || echo "⚠️ WARNING: Не вдалося отримати список репортерів!"
+        run: npx playwright test --list || echo "⚠️ WARNING Не вдалося отримати список репортерів!"
 
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json
