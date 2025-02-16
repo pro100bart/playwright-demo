@@ -1,20 +1,23 @@
-name: Playwright Tests
+name: Run Tests on PR
 
 on:
+<<<<<<< HEAD
 
   pull_request:
+=======
+  pull_request: 
+>>>>>>> 5e3e043 (Update main.yml)
     branches:
-      - main
+      - main  
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-latest  
     steps:
       - name: Checkout репозиторію
-        uses: actions/checkout@v4  # Оновлена версія
+        uses: actions/checkout@v4
 
-      - name: Встановлення Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
