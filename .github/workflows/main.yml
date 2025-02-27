@@ -34,7 +34,9 @@ jobs:
       - name: Debug Playwright Report Directory
         run: |
           echo "📂 Checking Playwright report directory:"
+          ls -la || echo "⚠️ WARNING: Root directory not found!"
           ls -la playwright-report || echo "⚠️ WARNING: playwright-report directory not found!"
+          ls -la playwright-report/index.html || echo "⚠️ WARNING: Playwright report file not found!"
 
       - name: Extract Test Statistics from JSON logs
         run: |
@@ -52,13 +54,33 @@ jobs:
           echo "✅ Passed: $PASSED"
           echo "❌ Failed: $FAILED"
 
+      - name: Ensure Playwright Report Exists
+        run: |
+          if [ ! -d "playwright-report" ]; then
+            echo "❌ ERROR: playwright-report directory not found!"
+            exit 1
+          fi
+          if [ ! -f "playwright-report/index.html" ]; then
+            echo "❌ ERROR: playwright-report/index.html not found!"
+            exit 1
+          fi
+
       - name: Upload Playwright HTML Report
+        id: upload_report
         uses: actions/upload-artifact@v4
         with:
           name: playwright-html-report
-          path: playwright-report
+          path: playwright-report/**
           retention-days: 5
-          if-no-files-found: error 
+          if-no-files-found: error
+
+      - name: Get Artifact ID
+        id: get_artifact
+        run: |
+          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[] | select(.name=="playwright-html-report") | .id')
+          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment on PR with test results
         uses: mshick/add-pr-comment@v2
@@ -68,5 +90,5 @@ jobs:
             🔢 Total: **${{ env.TOTAL_TESTS }}**
             ✅ Passed: **${{ env.PASSED_TESTS }}**
             ❌ Failed: **${{ env.FAILED_TESTS }}**
-            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.artifact_id }})
+            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ env.ARTIFACT_ID }})
           repo-token: ${{ secrets.GITHUB_TOKEN }}
