@@ -14,7 +14,7 @@ jobs:
   test:
     runs-on: ubuntu-latest  
     steps:
-      - name: Checkout репозиторію
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Install Node.js
@@ -31,11 +31,6 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
-      - name: Debug JSON Output
-        run: |
-          echo "🔍 Виводимо JSON-звіт із логів Playwright:"
-          grep -A 10 '"stats"' playwright-output.log || echo "❌ Дані про тести не знайдено!"
-
       - name: Extract Test Statistics from JSON logs
         run: |
           TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
@@ -47,19 +42,19 @@ jobs:
           echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
           echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
 
-          echo "📊 Статистика тестів:"
-          echo "🔢 Загальна кількість: $TOTAL"
-          echo "✅ Пройдені: $PASSED"
-          echo "❌ Провалені: $FAILED"
+          echo "📊 Stats:"
+          echo "🔢 Total: $TOTAL"
+          echo "✅ Passed: $PASSED"
+          echo "❌ Failed: $FAILED"
 
       - name: Comment on PR with test results
         uses: mshick/add-pr-comment@v2
         with:
           message: |
-            📊 **Результати тестування**
-            🔢 Загальна кількість тестів: **${{ env.TOTAL_TESTS }}**
-            ✅ Виконано тестів: **${{ env.PASSED_TESTS }}**
-            ❌ Завалено тестів: **${{ env.FAILED_TESTS }}**
-            🔗 [Переглянути HTML-звіт](./playwright-report/index.html)
+            📊 **Results**
+            🔢 Total: **${{ env.TOTAL_TESTS }}**
+            ✅ Passed: **${{ env.PASSED_TESTS }}**
+            ❌ Failed: **${{ env.FAILED_TESTS }}**
+            🔗 [Check the HTML-report](./playwright-report/index.html)
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
