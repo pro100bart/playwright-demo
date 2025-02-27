@@ -1,34 +1,94 @@
 name: Run Tests on PR
 
 on:
-  pull_request:  # Запуск тестів при створенні PR
+  pull_request:
     branches:
-      - main  # Або інша гілка, в яку відправляється PR
+      - main  
+
+permissions:
+  contents: write  
+  actions: write  
+  pull-requests: write  
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Виконання на Linux
+    runs-on: ubuntu-latest  
     steps:
-      - name: Checkout репозиторію
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Встановлення Node.js
-        uses: actions/setup-node@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      # - name: Встановлення залежностей
-      #   run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Встановлення Playwright
+      - name: Install Playwright
         run: npx playwright install --with-deps
 
-      - name: Запуск тестів у headless-режимі
-        run: npx playwright test
+      - name: Run tests in headless-mode
+        run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
-      - name: Збереження результатів тестування
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Debug Playwright Report Directory
+        run: |
+          echo "📂 Checking Playwright report directory:"
+          ls -la || echo "⚠️ WARNING: Root directory not found!"
+          ls -la playwright-report || echo "⚠️ WARNING: playwright-report directory not found!"
+          ls -la playwright-report/index.html || echo "⚠️ WARNING: Playwright report file not found!"
+
+      - name: Extract Test Statistics from JSON logs
+        run: |
+          TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
+          FAILED=$(jq '.stats.unexpected' playwright-output.log || echo "0")
+          PASSED=$((TOTAL - FAILED))
+          if [ "$PASSED" -lt 0 ]; then PASSED=0; fi
+
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "FAILED_TESTS=$FAILED" >> $GITHUB_ENV
+
+          echo "📊 Stats:"
+          echo "🔢 Total: $TOTAL"
+          echo "✅ Passed: $PASSED"
+          echo "❌ Failed: $FAILED"
+
+      - name: Ensure Playwright Report Exists
+        run: |
+          if [ ! -d "playwright-report" ]; then
+            echo "❌ ERROR: playwright-report directory not found!"
+            exit 1
+          fi
+          if [ ! -f "playwright-report/index.html" ]; then
+            echo "❌ ERROR: playwright-report/index.html not found!"
+            exit 1
+          fi
+
+      - name: Upload Playwright HTML Report
+        id: upload_report
+        uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: test-results/  # Вказати папку для логів (змінюй за потреби)
+          name: playwright-html-report
+          path: playwright-report/**
+          retention-days: 5
+          if-no-files-found: error
+
+      - name: Get Artifact ID
+        id: get_artifact
+        run: |
+          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[] | select(.name=="playwright-html-report") | .id')
+          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR with test results
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            📊 **Results**
+            🔢 Total: **${{ env.TOTAL_TESTS }}**
+            ✅ Passed: **${{ env.PASSED_TESTS }}**
+            ❌ Failed: **${{ env.FAILED_TESTS }}**
+            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ env.ARTIFACT_ID }})
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
