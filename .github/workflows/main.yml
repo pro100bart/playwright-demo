@@ -48,7 +48,7 @@ jobs:
           echo "❌ Failed: $FAILED"
 
       - name: Upload Playwright HTML Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-html-report
           path: playwright-report
@@ -62,5 +62,5 @@ jobs:
             🔢 Total: **${{ env.TOTAL_TESTS }}**
             ✅ Passed: **${{ env.PASSED_TESTS }}**
             ❌ Failed: **${{ env.FAILED_TESTS }}**
-            🔗 [Check the HTML-report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
           repo-token: ${{ secrets.GITHUB_TOKEN }}
