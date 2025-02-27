@@ -31,6 +31,11 @@ jobs:
       - name: Run tests in headless-mode
         run: npx playwright test --reporter=html,json 2>&1 | tee playwright-output.log
 
+      - name: Debug Playwright Report Directory
+        run: |
+          echo "📂 Checking Playwright report directory:"
+          ls -la playwright-report || echo "⚠️ WARNING: playwright-report directory not found!"
+
       - name: Extract Test Statistics from JSON logs
         run: |
           TOTAL=$(jq '.stats.expected' playwright-output.log || echo "0")
@@ -53,6 +58,7 @@ jobs:
           name: playwright-html-report
           path: playwright-report
           retention-days: 5
+          if-no-files-found: error 
 
       - name: Comment on PR with test results
         uses: mshick/add-pr-comment@v2
