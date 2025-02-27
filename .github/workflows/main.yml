@@ -68,5 +68,5 @@ jobs:
             🔢 Total: **${{ env.TOTAL_TESTS }}**
             ✅ Passed: **${{ env.PASSED_TESTS }}**
             ❌ Failed: **${{ env.FAILED_TESTS }}**
-            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+            🔗 [Check the HTML-report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${{ github.artifact_id }})
           repo-token: ${{ secrets.GITHUB_TOKEN }}
